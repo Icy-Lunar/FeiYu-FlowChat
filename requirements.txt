@@ -1,0 +1,8 @@
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.34,<1.0
+httpx>=0.28,<1.0
+pydantic>=2.10,<3.0
+keyring>=25.6,<27.0
+markdown-it-py[linkify,plugins]>=4.3,<5.0
+latex2mathml>=3.81,<4.0
+pypdf[crypto]>=6,<8

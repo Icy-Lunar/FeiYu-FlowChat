@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+.venv/
+venv/
+.env
+
+# Runtime data can contain private conversations and provider configuration.
+# Keep only the empty archive placeholder in version control.
+data/*
+!data/archives/
+data/archives/*
+!data/archives/.gitkeep

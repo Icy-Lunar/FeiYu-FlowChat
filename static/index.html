@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="导入、归档并继续 DeepSeek 历史对话" />
+    <meta name="theme-color" content="#315ed5" />
+    <title>肥鱼 FlowChat</title>
+    <link rel="icon" href="/static/favicon.svg?v=3" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="对话归档">
+        <div class="brand-row">
+          <div class="brand-mark" aria-hidden="true">
+            <img src="/static/favicon.svg?v=3" width="40" height="40" alt="" />
+          </div>
+          <div>
+            <div class="brand-name">肥鱼 FlowChat</div>
+            <div class="brand-subtitle">个人对话资料库</div>
+          </div>
+          <button class="icon-button mobile-only" id="closeSidebarButton" aria-label="关闭侧栏">×</button>
+        </div>
+
+        <div class="sidebar-actions">
+          <button class="primary-button" id="importButton">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v2h14v-2"/></svg>
+            导入对话
+          </button>
+          <button class="secondary-button square" id="newChatButton" aria-label="新建对话" title="新建对话">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+
+        <label class="search-box">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg>
+          <input id="conversationSearch" type="search" placeholder="搜索标题、正文与识别文字" aria-label="搜索归档" autocomplete="off" />
+          <kbd>⌘/Ctrl K</kbd>
+        </label>
+
+        <div class="archive-filters" aria-label="归档筛选">
+          <button type="button" class="active" data-archive-filter="all" aria-pressed="true">全部对话</button>
+          <button type="button" data-archive-filter="starred" aria-pressed="false">收藏</button>
+        </div>
+
+        <div class="archive-label">
+          <span>本地归档</span>
+          <span><button class="mini-link" id="batchModeButton" type="button">批量</button> · <span id="archiveCount">0</span></span>
+        </div>
+        <div class="batch-bar hidden" id="batchBar">
+          <span id="batchCount">已选 0</span>
+          <button type="button" id="batchOrganizeButton">整理</button>
+          <button type="button" id="batchTrashButton">回收</button>
+          <button type="button" id="batchCancelButton">取消</button>
+        </div>
+        <nav class="conversation-list" id="conversationList" aria-label="已归档对话"></nav>
+
+        <div class="sidebar-footer">
+          <button class="footer-button" id="dataCenterButton">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v12H4zM8 7V4h8v3m-8 5h8m-8 4h5"/></svg>
+            <span>数据保全中心</span>
+            <span class="settings-dot" id="healthDot"></span>
+          </button>
+          <button class="footer-button" id="settingsButton">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1-2.8 2.8-.1-.1a1.8 1.8 0 0 0-2-.4 1.8 1.8 0 0 0-1.1 1.7V21H10v-.1A1.8 1.8 0 0 0 8.9 19a1.8 1.8 0 0 0-2 .4l-.1.1L4 16.7l.1-.1a1.8 1.8 0 0 0 .4-2A1.8 1.8 0 0 0 2.8 13H2V9h.8a1.8 1.8 0 0 0 1.7-1.1 1.8 1.8 0 0 0-.4-2L4 5.8 6.8 3l.1.1a1.8 1.8 0 0 0 2 .4A1.8 1.8 0 0 0 10 1.8V1h4v.8a1.8 1.8 0 0 0 1.1 1.7 1.8 1.8 0 0 0 2-.4l.1-.1L20 5.8l-.1.1a1.8 1.8 0 0 0-.4 2A1.8 1.8 0 0 0 21.2 9h.8v4h-.8a1.8 1.8 0 0 0-1.8 2Z"/></svg>
+            <span>模型与 API 设置</span>
+            <span class="settings-dot" id="settingsDot"></span>
+          </button>
+          <div class="storage-note">
+            <span class="status-pulse"></span>
+            自动保存到本机 JSON
+          </div>
+        </div>
+      </aside>
+
+      <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <button class="icon-button mobile-only" id="openSidebarButton" aria-label="打开侧栏">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          </button>
+          <div class="conversation-heading">
+            <h1 id="conversationTitle">对话归档</h1>
+            <span class="source-badge hidden" id="sourceBadge"></span>
+          </div>
+          <div class="topbar-actions" id="conversationActions">
+            <button class="icon-button" id="starButton" disabled aria-label="收藏对话" title="收藏对话">☆</button>
+            <details class="conversation-menu" id="conversationMenu">
+              <summary aria-label="对话操作" title="对话操作">•••</summary>
+              <div class="conversation-menu-items">
+            <button class="text-button" id="organizeButton" disabled>整理</button>
+            <button class="text-button" id="versionsButton" disabled>版本</button>
+            <button class="text-button" id="renameButton" disabled>重命名</button>
+            <a class="text-button disabled" id="exportButton" href="#" aria-disabled="true">导出 JSON</a>
+            <button class="icon-button danger" id="deleteButton" disabled aria-label="移至回收站" title="移至回收站">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16m-10 4v6m4-6v6M9 7l1-3h4l1 3m3 0-1 14H7L6 7"/></svg>
+              <span>移至回收站</span>
+            </button>
+              </div>
+            </details>
+          </div>
+        </header>
+
+        <section class="chat-scroll" id="chatScroll" aria-live="polite">
+          <div class="welcome-state" id="welcomeState">
+            <p class="eyebrow">肥鱼 · 本地工作台</p>
+            <h2>接着上次的思路。</h2>
+            <p class="welcome-copy">从左侧打开一段对话，或导入 DeepSeek 分享。消息、图片和文档会整理在同一处，随时回来查阅。</p>
+            <div class="welcome-actions">
+              <button class="primary-button large" id="welcomeImportButton">导入分享链接</button>
+              <button class="secondary-button large" id="welcomeNewButton">写一段新对话</button>
+            </div>
+            <div class="desk-note">
+              <span>使用提示</span>
+              <p>阅读和导出无需配置模型。需要继续提问时，再到左下角连接 API。</p>
+              <p>原文件可用时会一起保存；受限附件会在消息旁标明状态。</p>
+            </div>
+          </div>
+          <div class="messages hidden" id="messages"></div>
+        </section>
+        <button class="jump-latest hidden" id="jumpLatest" type="button">↓ 回到最新消息</button>
+
+        <footer class="composer-wrap hidden" id="composerWrap">
+          <div class="composer">
+            <textarea id="messageInput" rows="1" placeholder="继续这段对话…" aria-label="输入消息"></textarea>
+            <div class="composer-bottom">
+              <button class="model-chip" id="modelChip" type="button" title="打开模型设置">
+                <span class="model-indicator"></span>
+                <span id="modelChipText">配置模型</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg>
+              </button>
+              <div class="mode-controls" role="group" aria-label="对话模式">
+                <button type="button" class="mode-toggle" id="thinkingToggle" aria-pressed="false" aria-describedby="modeStatus" disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6m-5 3h4M8.3 14.5a6 6 0 1 1 7.4 0c-.8.7-1.2 1.4-1.2 2.5h-5c0-1.1-.4-1.8-1.2-2.5Z"/></svg>
+                  <span>思考</span><span class="mode-state" aria-hidden="true">关</span>
+                </button>
+                <button type="button" class="mode-toggle" id="searchToggle" aria-pressed="false" aria-describedby="modeStatus" disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z"/></svg>
+                  <span>联网</span><span class="mode-state" aria-hidden="true">关</span>
+                </button>
+              </div>
+              <span class="shortcut-hint">Enter 发送 · Shift+Enter 换行</span>
+              <button class="send-button" id="sendButton" aria-label="发送消息" disabled>
+                <svg class="send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+                <span class="stop-icon">■</span>
+              </button>
+            </div>
+          </div>
+          <p class="composer-note"><span id="contextEstimate">上下文约 0 tokens</span></p>
+          <p class="mode-status" id="modeStatus" role="status" aria-live="polite">选择模型后可设置思考与联网。</p>
+        </footer>
+      </main>
+    </div>
+
+    <dialog class="image-dialog" id="imageDialog" aria-labelledby="imagePreviewTitle">
+      <header><strong id="imagePreviewTitle">图片预览</strong><button type="button" class="icon-button" id="imagePreviewClose" aria-label="关闭图片">×</button></header>
+      <img id="imagePreview" alt="图片预览" />
+    </dialog>
+
+    <dialog class="modal" id="importDialog">
+      <form method="dialog" class="modal-card" id="importForm">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">本地归档</p>
+            <h2>导入历史对话</h2>
+          </div>
+          <button class="icon-button" type="button" id="importCloseButton" aria-label="关闭">×</button>
+        </div>
+        <div class="tab-list" role="tablist">
+          <button type="button" class="tab active" data-import-tab="deepseek">DeepSeek 分享链接</button>
+          <button type="button" class="tab" data-import-tab="json">OpenAI JSON</button>
+        </div>
+        <div class="tab-panel" id="deepseekPanel">
+          <label class="field-label" for="shareUrl">分享链接（可每行一个，支持批量导入）</label>
+          <div class="url-input-row">
+            <textarea id="shareUrl" rows="4" placeholder="https://chat.deepseek.com/share/…" autocomplete="off"></textarea>
+            <button type="button" class="paste-button" id="pasteButton">粘贴</button>
+          </div>
+          <p class="field-help">会自动检测重复链接并保留完整原始响应。若已选择模型档案，将额外发起一次短请求生成标题并产生少量计费；模型不可用时才使用第一句用户消息。</p>
+          <label class="import-policy"><span class="field-label">如果链接已经导入</span><select id="duplicateAction"><option value="skip">打开已有归档</option><option value="copy">重新读取为副本（补全旧版遗漏的附件）</option></select></label>
+          <p class="field-help">自动保存可公开下载的文件，每个最多 20 MB、每段对话合计 60 MB。图片仅能取得预览时会注明；扫描图片不会自动执行 OCR。</p>
+        </div>
+        <div class="tab-panel hidden" id="jsonPanel">
+          <label class="file-drop" id="fileDrop" for="jsonFile">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4L8 8M5 15v4h14v-4"/></svg>
+            <strong id="fileName">选择或拖入 JSON 文件</strong>
+            <span>支持本项目归档和标准 messages 数组</span>
+            <input id="jsonFile" type="file" accept="application/json,.json" />
+          </label>
+        </div>
+        <div class="inline-error hidden" id="importError"></div>
+        <div class="modal-footer">
+          <button class="secondary-button" type="button" id="importCancelButton">取消</button>
+          <button type="button" class="primary-button" id="confirmImportButton">读取并归档</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal settings-modal" id="settingsDialog">
+      <form method="dialog" class="modal-card" id="settingsForm">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">MODEL CONNECTION</p>
+            <h2>模型与 API 设置</h2>
+          </div>
+          <button class="icon-button" type="button" id="settingsCloseButton" aria-label="关闭">×</button>
+        </div>
+        <div class="settings-scroll">
+          <div class="field-grid">
+            <label>
+              <span class="field-label">配置档案</span>
+              <select id="profileSelect"><option value="">新建配置档案</option></select>
+            </label>
+            <label>
+              <span class="field-label">档案名称</span>
+              <input id="profileNameInput" type="text" placeholder="例如：DeepSeek 个人" />
+            </label>
+          </div>
+          <div class="settings-section">
+            <label class="field-label" for="providerSelect">服务商预设</label>
+            <select id="providerSelect"></select>
+            <p class="field-help" id="providerHint"></p>
+          </div>
+          <div class="field-grid">
+            <label>
+              <span class="field-label">Base URL</span>
+              <input id="baseUrlInput" type="url" placeholder="https://api.example.com/v1" required />
+            </label>
+            <label>
+              <span class="field-label">模型 ID</span>
+              <div class="password-row">
+                <input id="modelInput" type="text" placeholder="model-name" required />
+                <button type="button" class="password-toggle" id="fetchModelsButton">获取列表</button>
+              </div>
+            </label>
+          </div>
+          <label>
+            <span class="field-label">API Key</span>
+            <div class="password-row">
+              <input id="apiKeyInput" type="password" placeholder="sk-…（Ollama 等本地服务可留空）" autocomplete="off" />
+              <button type="button" class="password-toggle" id="passwordToggle">显示</button>
+            </div>
+          </label>
+          <div class="vault-note"><strong>系统凭据库保护</strong><span>保存后 API Key 进入操作系统凭据库，不写入浏览器、配置文件、归档或备份。</span></div>
+          <div class="field-grid compact">
+            <label>
+              <span class="field-label">Temperature</span>
+              <input id="temperatureInput" type="number" min="0" max="2" step="0.1" value="0.7" />
+            </label>
+            <label>
+              <span class="field-label">最大输出 Tokens</span>
+              <input id="maxTokensInput" type="number" min="1" placeholder="由模型决定" />
+            </label>
+          </div>
+          <label>
+            <span class="field-label">系统提示词（可选）</span>
+            <textarea id="systemPromptInput" rows="3" placeholder="你是一位有帮助的助手。"></textarea>
+          </label>
+          <div class="field-grid compact">
+            <label>
+              <span class="field-label">上下文范围</span>
+              <select id="contextModeInput"><option value="all">完整历史</option><option value="recent">仅最近消息</option></select>
+            </label>
+            <label>
+              <span class="field-label">最近消息数</span>
+              <input id="recentMessagesInput" type="number" min="2" max="200" value="20" />
+            </label>
+          </div>
+          <label>
+            <span class="field-label">续聊时如何发送附件</span>
+            <select id="attachmentModeInput"><option value="text">仅文字与 OCR / 提取文字</option><option value="images">文字与图片（需要视觉模型）</option><option value="files">文字、图片与文件（需要文件输入支持）</option></select>
+            <p class="field-help">按所选模型的能力设置。图片和文件会增加 API 用量；仅文字模式不会发送文件二进制内容。</p>
+          </label>
+          <details class="advanced-settings">
+            <summary>高级请求参数</summary>
+            <div class="field-grid">
+              <label>
+                <span class="field-label">额外请求体 JSON</span>
+                <textarea id="extraBodyInput" rows="5" spellcheck="false" placeholder='{"enable_search": true}'></textarea>
+              </label>
+              <label>
+                <span class="field-label">额外请求头 JSON</span>
+                <textarea id="extraHeadersInput" rows="5" spellcheck="false" placeholder='{"HTTP-Referer": "…"}'></textarea>
+              </label>
+            </div>
+          </details>
+          <div class="billing-warning">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 4.8 3.1 17.3A1.5 1.5 0 0 0 4.4 19.5h15.2a1.5 1.5 0 0 0 1.3-2.2L13.7 4.8a2 2 0 0 0-3.4 0Z"/></svg>
+            <span><strong>API 测试会产生服务商计费</strong>点击测试后，将向当前地址发送一条最多输出 16 tokens 的标准请求；测试内容不会写入对话归档。</span>
+          </div>
+          <div class="inline-error hidden" id="settingsError"></div>
+          <div class="test-result hidden" id="testResult"></div>
+        </div>
+        <div class="modal-footer split">
+          <div>
+            <button type="button" class="secondary-button" id="testConnectionButton">测试 API（会计费）</button>
+            <button type="button" class="text-button danger-text" id="deleteProfileButton">删除档案</button>
+          </div>
+          <div>
+            <button class="secondary-button" type="button" id="settingsCancelButton">取消</button>
+            <button type="button" class="primary-button" id="saveSettingsButton">保存设置</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal settings-modal" id="dataCenterDialog">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div><p class="eyebrow">DATA VAULT</p><h2>数据保全中心</h2></div>
+          <button class="icon-button" type="button" id="dataCenterCloseButton" aria-label="关闭">×</button>
+        </div>
+        <div class="settings-scroll data-center-scroll">
+          <section class="vault-section">
+            <div class="section-heading"><div><h3>数据健康</h3><p>检查归档结构、原始快照与校验和</p></div><button class="secondary-button" id="repairDataButton" type="button">扫描并修复</button></div>
+            <div class="health-card" id="healthSummary">尚未扫描</div>
+          </section>
+          <section class="vault-section">
+            <div class="section-heading"><div><h3>完整备份</h3><p>包含对话、原始响应、版本和附件，并附 SHA-256 清单</p></div><button class="primary-button" id="createBackupButton" type="button">立即创建备份</button></div>
+            <a class="backup-download hidden" id="backupDownload" href="#">下载最新备份</a>
+            <div class="field-grid">
+              <label><span class="field-label">自动备份目录</span><input id="backupDestinationInput" type="text" placeholder="例如 D:\FlowChatBackups" /></label>
+              <label><span class="field-label">备份间隔（小时）</span><input id="backupIntervalInput" type="number" min="1" max="720" value="24" /></label>
+              <label><span class="field-label">保留备份数量</span><input id="backupRetentionInput" type="number" min="1" max="365" value="14" /></label>
+              <label><span class="field-label">回收站保留天数</span><input id="trashRetentionInput" type="number" min="1" max="3650" value="30" /></label>
+            </div>
+            <label class="checkbox-row"><input id="autoBackupInput" type="checkbox" /><span><strong>启用自动备份</strong><small>程序运行期间按设定周期执行。</small></span></label>
+            <button class="secondary-button" id="saveBackupSettingsButton" type="button">保存自动备份设置</button>
+            <p class="backup-status" id="backupStatus">尚无自动备份记录</p>
+          </section>
+          <section class="vault-section">
+            <div class="section-heading"><div><h3>恢复备份</h3><p>恢复前会验证 manifest 和每个文件的 SHA-256</p></div></div>
+            <div class="field-grid compact">
+              <label><span class="field-label">备份 ZIP</span><input id="restoreBackupFile" type="file" accept="application/zip,.zip" /></label>
+              <label><span class="field-label">冲突处理</span><select id="restoreConflictSelect"><option value="skip">跳过已有</option><option value="copy">另存副本</option><option value="replace">保留版本后替换</option></select></label>
+            </div>
+            <button class="secondary-button" id="restoreBackupButton" type="button">验证并恢复</button>
+          </section>
+          <section class="vault-section">
+            <div class="section-heading"><div><h3>回收站</h3><p>恢复误删对话；永久删除需要再次确认</p></div><button class="secondary-button" id="refreshTrashButton" type="button">刷新</button></div>
+            <div class="management-list" id="trashList"></div>
+          </section>
+          <section class="vault-section">
+            <div class="section-heading"><div><h3>当前对话版本</h3><p>每次覆盖前自动保存，最多保留 50 个版本</p></div></div>
+            <div class="management-list" id="versionList"></div>
+          </section>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="modal confirm-modal" id="organizeDialog">
+      <form method="dialog" class="modal-card" id="organizeForm">
+        <div class="modal-header"><div><p class="eyebrow">ORGANIZE</p><h2>整理对话</h2></div><button class="icon-button" type="button" id="organizeCloseButton">×</button></div>
+        <div class="tab-panel">
+          <label><span class="field-label">文件夹</span><input id="folderInput" type="text" placeholder="例如：项目资料" /></label>
+          <label><span class="field-label">标签（用逗号分隔）</span><input id="tagsInput" type="text" placeholder="需求, Python, 待跟进" /></label>
+          <label class="checkbox-row"><input id="starredInput" type="checkbox" /><span><strong>收藏</strong><small>在列表中快速识别重要对话。</small></span></label>
+          <label class="checkbox-row"><input id="pinnedInput" type="checkbox" /><span><strong>置顶</strong><small>始终显示在归档列表顶部。</small></span></label>
+        </div>
+        <div class="modal-footer"><button class="secondary-button" type="button" id="organizeCancelButton">取消</button><button class="primary-button" type="button" id="saveOrganizeButton">保存整理</button></div>
+      </form>
+    </dialog>
+
+    <dialog class="modal confirm-modal" id="confirmDialog">
+      <form method="dialog" class="modal-card">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">CONFIRM</p>
+            <h2 id="confirmTitle">确认操作</h2>
+          </div>
+        </div>
+        <p class="confirm-copy" id="confirmCopy"></p>
+        <div class="modal-footer">
+          <button class="secondary-button" value="cancel">取消</button>
+          <button class="danger-button" value="confirm" id="confirmAction">确认</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast-stack" id="toastStack" aria-live="assertive"></div>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
