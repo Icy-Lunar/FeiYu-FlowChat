@@ -1,0 +1,25 @@
+[project]
+name = "feiyu-flowchat"
+version = "0.5.0"
+description = "Import, archive, and continue DeepSeek shared conversations"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.115,<1.0",
+  "uvicorn[standard]>=0.34,<1.0",
+  "httpx>=0.28,<1.0",
+  "pydantic>=2.10,<3.0",
+  "keyring>=25.6,<27.0",
+  "markdown-it-py[linkify,plugins]>=4.3,<5.0",
+  "latex2mathml>=3.81,<4.0",
+  "pypdf[crypto]>=6,<8",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9.0",
+  "pytest-asyncio>=0.25,<1.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

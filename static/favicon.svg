@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">肥鱼 FlowChat</title>
+  <desc id="desc">蓝底白色圆润小鱼，腹部轮廓融入对话气泡的尾角。</desc>
+  <!-- One shared vector for the sidebar and browser icon. Broad shapes remain
+       legible at 16 px; the speech corner is part of the fish silhouette. -->
+  <rect width="64" height="64" rx="15" fill="#315ed5"/>
+  <path d="M24 29 12 21Q8 18 8 23V41Q8 46 12 43L24 35Z" fill="#b6d5ff"/>
+  <path d="M19 31C19 22 27 16 37 16S56 23 56 32 48 47 38 47H34L26 52 27 45C22 42 19 37 19 31Z" fill="#ffffff"/>
+  <path d="M33 28C29 31 29 35 33 38" fill="none" stroke="#315ed5" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="46" cy="29" r="2.5" fill="#315ed5"/>
+</svg>

@@ -1,0 +1,3 @@
+"""肥鱼 FlowChat application package."""
+
+__version__ = "0.5.0"
