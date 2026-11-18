@@ -1,0 +1,2 @@
+# FeiYu-FlowChat
+一个能够从DeepSeek官网分享的对话链接提取对话，并进行继续聊天与本地归档的项目，使用Python语言作为后端，HTML+CSS+JavaScript作为前端。通过API请求不同厂商的大模型以进行聊天。
