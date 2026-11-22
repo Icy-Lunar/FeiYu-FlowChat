@@ -23,7 +23,7 @@ SETTINGS_PATH = DATA_DIR / "settings.json"
 PROFILES_PATH = DATA_DIR / "provider_profiles.json"
 
 APP_NAME = "肥鱼 FlowChat"
-APP_VERSION = "0.5.0"
+APP_VERSION = "0.5.1"
 
 
 def ensure_data_dirs() -> None:

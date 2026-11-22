@@ -40,6 +40,7 @@ const els = {
   restoreConflictSelect: byId("restoreConflictSelect"), backupStatus: byId("backupStatus"), folderInput: byId("folderInput"), tagsInput: byId("tagsInput"),
   starredInput: byId("starredInput"), pinnedInput: byId("pinnedInput"),
   thinkingToggle: byId("thinkingToggle"), searchToggle: byId("searchToggle"), modeStatus: byId("modeStatus"),
+  deepseekKeyGuide: byId("deepseekKeyGuide"),
 };
 
 const STORAGE_CONFIG = "flowchat.provider.v2";
@@ -406,6 +407,7 @@ function openSettings() {
 function fillSettings(config, keyStored = false) {
   els.providerSelect.value = state.providers.some((item) => item.id === config.provider_id) ? config.provider_id : "custom";
   els.baseUrlInput.value = config.base_url || ""; els.modelInput.value = config.model || ""; els.apiKeyInput.value = config.api_key || "";
+  els.apiKeyInput.dataset.keyStored = String(keyStored); els.apiKeyInput.dataset.providerId = config.provider_id || "custom";
   els.apiKeyInput.placeholder = keyStored ? "Key 已存入系统凭据库；留空表示保持不变" : "sk-…（本地服务可留空）";
   els.temperatureInput.value = config.temperature ?? 0.7; els.maxTokensInput.value = config.max_tokens ?? "";
   els.systemPromptInput.value = config.system_prompt || ""; els.contextModeInput.value = config.context_mode || "all";
@@ -414,14 +416,34 @@ function fillSettings(config, keyStored = false) {
   els.extraBodyInput.value = Object.keys(config.extra_body || {}).length ? JSON.stringify(config.extra_body, null, 2) : "";
   els.extraHeadersInput.value = Object.keys(config.extra_headers || {}).length ? JSON.stringify(config.extra_headers, null, 2) : ""; updateProviderHint();
 }
-function updateProviderHint() { els.providerHint.textContent = state.providers.find((item) => item.id === els.providerSelect.value)?.hint || ""; }
+function updateProviderHint() {
+  const providerId = els.providerSelect.value;
+  els.providerHint.textContent = state.providers.find((item) => item.id === providerId)?.hint || "";
+  els.deepseekKeyGuide.classList.toggle("hidden", providerId !== "deepseek");
+  if (!els.apiKeyInput.value) {
+    els.apiKeyInput.placeholder = els.apiKeyInput.dataset.keyStored === "true"
+      ? "Key 已存入系统凭据库；留空表示保持不变"
+      : providerId === "ollama" ? "本地 Ollama 通常无需 API Key"
+        : providerId === "deepseek" ? "粘贴以 sk- 开头的 DeepSeek Key" : "粘贴服务商提供的 API Key";
+  }
+}
 function applyProviderPreset() {
   const provider = state.providers.find((item) => item.id === els.providerSelect.value); if (!provider) return;
+  if (els.apiKeyInput.dataset.providerId && els.apiKeyInput.dataset.providerId !== provider.id) {
+    els.apiKeyInput.value = ""; els.apiKeyInput.dataset.keyStored = "false";
+  }
+  els.apiKeyInput.dataset.providerId = provider.id;
   els.baseUrlInput.value = provider.base_url || ""; els.modelInput.value = provider.model || "";
   if (!els.profileNameInput.value || els.profileNameInput.value.endsWith("配置")) els.profileNameInput.value = `${provider.name} 配置`; updateProviderHint();
 }
 function selectProfile() {
-  const id = els.profileSelect.value; if (!id) { state.profileId = ""; els.profileNameInput.value = ""; return; }
+  const id = els.profileSelect.value;
+  if (!id) {
+    state.profileId = ""; els.apiKeyInput.value = ""; els.apiKeyInput.dataset.keyStored = "false"; els.apiKeyInput.dataset.providerId = "";
+    const provider = state.providers.find((item) => item.id === "deepseek") || state.providers[0];
+    if (provider) { els.providerSelect.value = provider.id; els.profileNameInput.value = `${provider.name} 配置`; applyProviderPreset(); }
+    return;
+  }
   const profile = state.profiles.find((item) => item.id === id); if (!profile) return;
   state.profileId = id; els.profileNameInput.value = profile.name; fillSettings({ ...profile.provider, context_mode: state.config.context_mode, recent_messages: state.config.recent_messages }, profile.key_stored);
 }
@@ -431,6 +453,8 @@ function readSettingsForm() {
   if (!/^https?:\/\//i.test(baseUrl)) throw new Error("Base URL 必须以 http:// 或 https:// 开头"); if (!model) throw new Error("请填写模型 ID");
   const temperature = els.temperatureInput.value === "" ? null : Number(els.temperatureInput.value);
   const maxTokens = els.maxTokensInput.value === "" ? null : Number(els.maxTokensInput.value);
+  const cloudProvider = ["deepseek", "openai", "siliconflow", "dashscope", "openrouter"].includes(els.providerSelect.value);
+  if (cloudProvider && !els.apiKeyInput.value.trim() && els.apiKeyInput.dataset.keyStored !== "true") throw new Error("请粘贴服务商提供的 API Key");
   if (temperature !== null && (!Number.isFinite(temperature) || temperature < 0 || temperature > 2)) throw new Error("Temperature 必须在 0 到 2 之间");
   if (maxTokens !== null && (!Number.isInteger(maxTokens) || maxTokens < 1)) throw new Error("最大 Tokens 必须是正整数");
   return { provider_id: els.providerSelect.value || "custom", base_url: baseUrl, model, api_key: els.apiKeyInput.value.trim(), temperature,
@@ -441,13 +465,17 @@ function readSettingsForm() {
 }
 async function saveSettings() {
   showInline(els.settingsError, "");
+  setButtonBusy(els.saveSettingsButton, true, "正在保存…");
   try {
-    const config = readSettingsForm(), name = els.profileNameInput.value.trim(); if (!name) throw new Error("请填写配置档案名称");
+    const config = readSettingsForm();
+    const providerName = state.providers.find((item) => item.id === config.provider_id)?.name || "模型";
+    const name = els.profileNameInput.value.trim() || `${providerName} 配置`;
     const provider = { ...config }; delete provider.context_mode; delete provider.recent_messages;
     const payload = await api("/api/provider-profiles", { method: "POST", body: JSON.stringify({ id: state.profileId || null, name, provider }) });
     state.profileId = payload.profile.id; config.api_key = ""; saveLocalConfig(config); await loadProfiles(); els.settingsDialog.close();
-    toast(payload.profile.secret_backend === "session_only" ? "配置已保存；系统凭据库不可用，Key 仅保留到程序关闭" : "配置和 Key 已安全保存", "success");
+    toast(payload.profile.secret_backend === "session_only" ? "配置已保存；Key 将在程序关闭后清除" : "已连接模型，可以开始对话", "success");
   } catch (error) { showInline(els.settingsError, error.message); }
+  finally { setButtonBusy(els.saveSettingsButton, false); }
 }
 async function testProviderConnection() {
   showInline(els.settingsError, ""); showInline(els.testResult, ""); let config; try { config = readSettingsForm(); } catch (error) { return showInline(els.settingsError, error.message); }
@@ -475,7 +503,7 @@ async function deleteProfile() {
 function updateConfigIndicators() {
   const profile = state.profiles.find((item) => item.id === state.profileId), configured = Boolean(profile);
   els.settingsDot.classList.toggle("configured", configured); els.modelChip.classList.toggle("configured", configured);
-  els.modelChipText.textContent = profile ? `${profile.name} · ${profile.provider.model}` : "配置模型"; updateContextEstimate();
+  els.modelChipText.textContent = profile ? `${profile.name} · ${profile.provider.model}` : "连接模型"; updateContextEstimate();
   updateModeControls();
 }
 

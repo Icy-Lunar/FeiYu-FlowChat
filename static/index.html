@@ -64,7 +64,7 @@
           </button>
           <button class="footer-button" id="settingsButton">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1-2.8 2.8-.1-.1a1.8 1.8 0 0 0-2-.4 1.8 1.8 0 0 0-1.1 1.7V21H10v-.1A1.8 1.8 0 0 0 8.9 19a1.8 1.8 0 0 0-2 .4l-.1.1L4 16.7l.1-.1a1.8 1.8 0 0 0 .4-2A1.8 1.8 0 0 0 2.8 13H2V9h.8a1.8 1.8 0 0 0 1.7-1.1 1.8 1.8 0 0 0-.4-2L4 5.8 6.8 3l.1.1a1.8 1.8 0 0 0 2 .4A1.8 1.8 0 0 0 10 1.8V1h4v.8a1.8 1.8 0 0 0 1.1 1.7 1.8 1.8 0 0 0 2-.4l.1-.1L20 5.8l-.1.1a1.8 1.8 0 0 0-.4 2A1.8 1.8 0 0 0 21.2 9h.8v4h-.8a1.8 1.8 0 0 0-1.8 2Z"/></svg>
-            <span>模型与 API 设置</span>
+            <span>连接模型</span>
             <span class="settings-dot" id="settingsDot"></span>
           </button>
           <div class="storage-note">
@@ -109,12 +109,12 @@
             <h2>接着上次的思路。</h2>
             <p class="welcome-copy">从左侧打开一段对话，或导入 DeepSeek 分享。消息、图片和文档会整理在同一处，随时回来查阅。</p>
             <div class="welcome-actions">
-              <button class="primary-button large" id="welcomeImportButton">导入分享链接</button>
-              <button class="secondary-button large" id="welcomeNewButton">写一段新对话</button>
+              <button class="primary-button large" id="welcomeImportButton">导入 DeepSeek 对话</button>
+              <button class="secondary-button large" id="welcomeNewButton">新建空白对话</button>
             </div>
             <div class="desk-note">
               <span>使用提示</span>
-              <p>阅读和导出无需配置模型。需要继续提问时，再到左下角连接 API。</p>
+              <p>阅读和导出无需配置模型。需要继续提问时，再点击左下角“连接模型”。</p>
               <p>原文件可用时会一起保存；受限附件会在消息旁标明状态。</p>
             </div>
           </div>
@@ -128,7 +128,7 @@
             <div class="composer-bottom">
               <button class="model-chip" id="modelChip" type="button" title="打开模型设置">
                 <span class="model-indicator"></span>
-                <span id="modelChipText">配置模型</span>
+                <span id="modelChipText">连接模型</span>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg>
               </button>
               <div class="mode-controls" role="group" aria-label="对话模式">
@@ -164,7 +164,7 @@
         <div class="modal-header">
           <div>
             <p class="eyebrow">本地归档</p>
-            <h2>导入历史对话</h2>
+            <h2>导入对话</h2>
           </div>
           <button class="icon-button" type="button" id="importCloseButton" aria-label="关闭">×</button>
         </div>
@@ -173,14 +173,23 @@
           <button type="button" class="tab" data-import-tab="json">OpenAI JSON</button>
         </div>
         <div class="tab-panel" id="deepseekPanel">
-          <label class="field-label" for="shareUrl">分享链接（可每行一个，支持批量导入）</label>
+          <div class="import-steps" aria-label="导入步骤">
+            <span><strong>1</strong> 粘贴分享链接</span>
+            <span><strong>2</strong> 导入到本机</span>
+            <span><strong>3</strong> 从左侧继续对话</span>
+          </div>
+          <label class="field-label" for="shareUrl">DeepSeek 分享链接</label>
           <div class="url-input-row">
             <textarea id="shareUrl" rows="4" placeholder="https://chat.deepseek.com/share/…" autocomplete="off"></textarea>
             <button type="button" class="paste-button" id="pasteButton">粘贴</button>
           </div>
-          <p class="field-help">会自动检测重复链接并保留完整原始响应。若已选择模型档案，将额外发起一次短请求生成标题并产生少量计费；模型不可用时才使用第一句用户消息。</p>
+          <p class="field-help">支持一次粘贴多个链接，每行一个。</p>
           <label class="import-policy"><span class="field-label">如果链接已经导入</span><select id="duplicateAction"><option value="skip">打开已有归档</option><option value="copy">重新读取为副本（补全旧版遗漏的附件）</option></select></label>
-          <p class="field-help">自动保存可公开下载的文件，每个最多 20 MB、每段对话合计 60 MB。图片仅能取得预览时会注明；扫描图片不会自动执行 OCR。</p>
+          <details class="import-details">
+            <summary>导入、标题和附件说明</summary>
+            <p>系统会检测重复链接并保存原始响应。已选择模型时，会用一次短请求生成标题并产生少量费用；模型不可用才使用首句。</p>
+            <p>公开附件会保存到本机，每个最多 20 MB、每段对话合计 60 MB。受限附件会标明状态。</p>
+          </details>
         </div>
         <div class="tab-panel hidden" id="jsonPanel">
           <label class="file-drop" id="fileDrop" for="jsonFile">
@@ -193,7 +202,7 @@
         <div class="inline-error hidden" id="importError"></div>
         <div class="modal-footer">
           <button class="secondary-button" type="button" id="importCancelButton">取消</button>
-          <button type="button" class="primary-button" id="confirmImportButton">读取并归档</button>
+          <button type="button" class="primary-button" id="confirmImportButton">导入到本机</button>
         </div>
       </form>
     </dialog>
@@ -202,105 +211,138 @@
       <form method="dialog" class="modal-card" id="settingsForm">
         <div class="modal-header">
           <div>
-            <p class="eyebrow">MODEL CONNECTION</p>
-            <h2>模型与 API 设置</h2>
+            <p class="eyebrow">首次配置约 1 分钟</p>
+            <h2>连接模型</h2>
           </div>
           <button class="icon-button" type="button" id="settingsCloseButton" aria-label="关闭">×</button>
         </div>
         <div class="settings-scroll">
-          <div class="field-grid">
-            <label>
-              <span class="field-label">配置档案</span>
-              <select id="profileSelect"><option value="">新建配置档案</option></select>
-            </label>
-            <label>
-              <span class="field-label">档案名称</span>
-              <input id="profileNameInput" type="text" placeholder="例如：DeepSeek 个人" />
-            </label>
-          </div>
-          <div class="settings-section">
-            <label class="field-label" for="providerSelect">服务商预设</label>
-            <select id="providerSelect"></select>
-            <p class="field-help" id="providerHint"></p>
-          </div>
-          <div class="field-grid">
-            <label>
-              <span class="field-label">Base URL</span>
-              <input id="baseUrlInput" type="url" placeholder="https://api.example.com/v1" required />
-            </label>
-            <label>
-              <span class="field-label">模型 ID</span>
+          <section class="quick-setup" aria-labelledby="quickSetupTitle">
+            <div class="quick-setup-heading">
+              <div><p class="step-label">快速配置</p><h3 id="quickSetupTitle">选择服务商，填入 API Key</h3></div>
+              <span>其余设置已预填</span>
+            </div>
+            <div class="field-grid quick-fields">
+              <label>
+                <span class="field-label">已有配置</span>
+                <select id="profileSelect"><option value="">新建配置</option></select>
+              </label>
+              <label>
+                <span class="field-label">服务商</span>
+                <select id="providerSelect"></select>
+              </label>
+            </div>
+            <p class="provider-hint" id="providerHint"></p>
+            <aside class="provider-onboarding" id="deepseekKeyGuide">
+              <div class="onboarding-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8m-3 3 2 2m-5 1 2 2"/></svg>
+              </div>
+              <div>
+                <strong>还没有 DeepSeek API Key？</strong>
+                <ol>
+                  <li>登录 DeepSeek 开放平台</li>
+                  <li>创建一个新的 API Key，并立即复制</li>
+                  <li>回到这里粘贴，然后保存</li>
+                </ol>
+                <div class="onboarding-links">
+                  <a class="primary-button" href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer">
+                    前往 DeepSeek 开放平台
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M17 13v5H6V7h5"/></svg>
+                  </a>
+                  <a href="https://api-docs.deepseek.com/" target="_blank" rel="noopener noreferrer">查看官方入门文档</a>
+                </div>
+                <small>Key 通常只展示一次。API 请求由 DeepSeek 计费，账户需有可用余额。</small>
+              </div>
+            </aside>
+            <label class="key-field">
+              <span class="field-label">API Key</span>
               <div class="password-row">
-                <input id="modelInput" type="text" placeholder="model-name" required />
-                <button type="button" class="password-toggle" id="fetchModelsButton">获取列表</button>
+                <input id="apiKeyInput" type="password" placeholder="粘贴以 sk- 开头的 Key" autocomplete="off" spellcheck="false" />
+                <button type="button" class="password-toggle" id="passwordToggle">显示</button>
               </div>
             </label>
-          </div>
-          <label>
-            <span class="field-label">API Key</span>
-            <div class="password-row">
-              <input id="apiKeyInput" type="password" placeholder="sk-…（Ollama 等本地服务可留空）" autocomplete="off" />
-              <button type="button" class="password-toggle" id="passwordToggle">显示</button>
-            </div>
-          </label>
-          <div class="vault-note"><strong>系统凭据库保护</strong><span>保存后 API Key 进入操作系统凭据库，不写入浏览器、配置文件、归档或备份。</span></div>
-          <div class="field-grid compact">
-            <label>
-              <span class="field-label">Temperature</span>
-              <input id="temperatureInput" type="number" min="0" max="2" step="0.1" value="0.7" />
-            </label>
-            <label>
-              <span class="field-label">最大输出 Tokens</span>
-              <input id="maxTokensInput" type="number" min="1" placeholder="由模型决定" />
-            </label>
-          </div>
-          <label>
-            <span class="field-label">系统提示词（可选）</span>
-            <textarea id="systemPromptInput" rows="3" placeholder="你是一位有帮助的助手。"></textarea>
-          </label>
-          <div class="field-grid compact">
-            <label>
-              <span class="field-label">上下文范围</span>
-              <select id="contextModeInput"><option value="all">完整历史</option><option value="recent">仅最近消息</option></select>
-            </label>
-            <label>
-              <span class="field-label">最近消息数</span>
-              <input id="recentMessagesInput" type="number" min="2" max="200" value="20" />
-            </label>
-          </div>
-          <label>
-            <span class="field-label">续聊时如何发送附件</span>
-            <select id="attachmentModeInput"><option value="text">仅文字与 OCR / 提取文字</option><option value="images">文字与图片（需要视觉模型）</option><option value="files">文字、图片与文件（需要文件输入支持）</option></select>
-            <p class="field-help">按所选模型的能力设置。图片和文件会增加 API 用量；仅文字模式不会发送文件二进制内容。</p>
-          </label>
-          <details class="advanced-settings">
-            <summary>高级请求参数</summary>
-            <div class="field-grid">
+            <div class="vault-note"><strong>只保存在你的电脑</strong><span>保存后进入操作系统凭据库，不写入对话、普通配置文件或备份。</span></div>
+          </section>
+
+          <details class="configuration-details">
+            <summary><span>更多设置</span><small>大多数用户无需修改</small></summary>
+            <div class="configuration-panel">
               <label>
-                <span class="field-label">额外请求体 JSON</span>
-                <textarea id="extraBodyInput" rows="5" spellcheck="false" placeholder='{"enable_search": true}'></textarea>
+                <span class="field-label">配置名称</span>
+                <input id="profileNameInput" type="text" placeholder="自动使用服务商名称" />
               </label>
+              <div class="field-grid">
+                <label>
+                  <span class="field-label">Base URL</span>
+                  <input id="baseUrlInput" type="url" placeholder="https://api.example.com/v1" required />
+                </label>
+                <label>
+                  <span class="field-label">模型 ID</span>
+                  <div class="password-row">
+                    <input id="modelInput" type="text" placeholder="model-name" required />
+                    <button type="button" class="password-toggle" id="fetchModelsButton">获取列表</button>
+                  </div>
+                </label>
+              </div>
+              <div class="field-grid compact">
+                <label>
+                  <span class="field-label">Temperature</span>
+                  <input id="temperatureInput" type="number" min="0" max="2" step="0.1" value="0.7" />
+                </label>
+                <label>
+                  <span class="field-label">最大输出 Tokens</span>
+                  <input id="maxTokensInput" type="number" min="1" placeholder="由模型决定" />
+                </label>
+              </div>
               <label>
-                <span class="field-label">额外请求头 JSON</span>
-                <textarea id="extraHeadersInput" rows="5" spellcheck="false" placeholder='{"HTTP-Referer": "…"}'></textarea>
+                <span class="field-label">系统提示词（可选）</span>
+                <textarea id="systemPromptInput" rows="3" placeholder="你是一位有帮助的助手。"></textarea>
               </label>
+              <div class="field-grid compact">
+                <label>
+                  <span class="field-label">上下文范围</span>
+                  <select id="contextModeInput"><option value="all">完整历史</option><option value="recent">仅最近消息</option></select>
+                </label>
+                <label>
+                  <span class="field-label">最近消息数</span>
+                  <input id="recentMessagesInput" type="number" min="2" max="200" value="20" />
+                </label>
+              </div>
+              <label>
+                <span class="field-label">续聊时如何发送附件</span>
+                <select id="attachmentModeInput"><option value="text">仅文字与 OCR / 提取文字</option><option value="images">文字与图片（需要视觉模型）</option><option value="files">文字、图片与文件（需要文件输入支持）</option></select>
+                <p class="field-help">图片和文件会增加 API 用量；不确定时保持“仅文字”。</p>
+              </label>
+              <details class="advanced-settings">
+                <summary>开发者请求参数</summary>
+                <div class="field-grid">
+                  <label>
+                    <span class="field-label">额外请求体 JSON</span>
+                    <textarea id="extraBodyInput" rows="5" spellcheck="false" placeholder='{"enable_search": true}'></textarea>
+                  </label>
+                  <label>
+                    <span class="field-label">额外请求头 JSON</span>
+                    <textarea id="extraHeadersInput" rows="5" spellcheck="false" placeholder='{"HTTP-Referer": "…"}'></textarea>
+                  </label>
+                </div>
+              </details>
+              <button type="button" class="text-button danger-text" id="deleteProfileButton">删除当前配置</button>
             </div>
           </details>
           <div class="billing-warning">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 4.8 3.1 17.3A1.5 1.5 0 0 0 4.4 19.5h15.2a1.5 1.5 0 0 0 1.3-2.2L13.7 4.8a2 2 0 0 0-3.4 0Z"/></svg>
-            <span><strong>API 测试会产生服务商计费</strong>点击测试后，将向当前地址发送一条最多输出 16 tokens 的标准请求；测试内容不会写入对话归档。</span>
+            <span><strong>测试连接会产生少量费用</strong>仅在需要排查 Key 或模型配置时使用；正常保存不调用 API。</span>
           </div>
           <div class="inline-error hidden" id="settingsError"></div>
           <div class="test-result hidden" id="testResult"></div>
         </div>
         <div class="modal-footer split">
           <div>
-            <button type="button" class="secondary-button" id="testConnectionButton">测试 API（会计费）</button>
-            <button type="button" class="text-button danger-text" id="deleteProfileButton">删除档案</button>
+            <button type="button" class="secondary-button" id="testConnectionButton">测试连接（会计费）</button>
           </div>
           <div>
             <button class="secondary-button" type="button" id="settingsCancelButton">取消</button>
-            <button type="button" class="primary-button" id="saveSettingsButton">保存设置</button>
+            <button type="button" class="primary-button" id="saveSettingsButton">保存并开始使用</button>
           </div>
         </div>
       </form>
