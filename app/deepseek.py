@@ -155,6 +155,7 @@ def parse_share_payload(payload: dict[str, Any], *, share_id: str, source_url: s
     archive.updated_at = utc_now()
     return archive
 
+
 async def fetch_deepseek_share(url: str, *, client: httpx.AsyncClient | None = None) -> ConversationArchive:
     """Fetch one public share and attach its raw payload for local persistence.
 
@@ -172,7 +173,7 @@ async def fetch_deepseek_share(url: str, *, client: httpx.AsyncClient | None = N
                 "Accept": "application/json",
                 "Origin": "https://chat.deepseek.com",
                 "Referer": canonical,
-                "User-Agent": "FeiYu-FlowChat/0.5 (+local archive importer)",
+                "User-Agent": "FeiYu-FlowChat/0.5.1 (+local archive importer)",
             },
         )
         response.raise_for_status()

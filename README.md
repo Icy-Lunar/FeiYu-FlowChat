@@ -6,10 +6,19 @@
 
 ## 界面预览
 
-![肥鱼 FlowChat 桌面端蓝白界面，展示思考与联网模式开关](docs/screenshots/modes-desktop.jpg)
+![肥鱼 FlowChat 桌面端快速配置，提供 DeepSeek 开放平台直达入口与三步 Key 申请说明](docs/screenshots/quick-setup-desktop.png)
 
 <details>
-<summary>查看移动端布局</summary>
+<summary>查看移动端快速配置</summary>
+
+![肥鱼 FlowChat 移动端快速配置](docs/screenshots/quick-setup-mobile.png)
+
+</details>
+
+<details>
+<summary>查看对话与思考、联网模式</summary>
+
+![肥鱼 FlowChat 桌面端蓝白界面，展示思考与联网模式开关](docs/screenshots/modes-desktop.jpg)
 
 ![肥鱼 FlowChat 移动端对话与模式回退提示](docs/screenshots/modes-mobile.jpg)
 
@@ -21,7 +30,17 @@
 - [开发文档](docs/DEVELOPMENT.md)：架构、数据模型、API、SSE、备份格式、测试和扩展指南
 - [思考、联网与回退](docs/API_MODES.md)：按钮用法、厂商适配表、计费说明和官方 API 依据
 
-## 主要能力
+## 已开发功能
+
+当前版本已完成从“历史对话导入”到“本地长期保全与继续对话”的完整流程：
+
+- DeepSeek 分享链接导入、去重、原始响应留存，以及图片、文件和公开 OCR 内容归档；
+- OpenAI 兼容 JSON 导入导出、模型生成标题、全文检索、收藏、标签、文件夹与批量整理；
+- 多厂商 OpenAI 兼容 API、多配置档案、系统凭据库保存 Key、模型列表与计费提示明确的连接测试；
+- Markdown、代码、表格和 LaTeX 渲染，左右分栏消息，桌面端与移动端蓝白响应式界面；
+- 思考与联网开关、厂商参数适配、不可用时自动回退默认模式，并保存回退说明与联网来源；
+- 原子写入、历史版本、回收站、健康检查、完整 ZIP 备份、自动备份与校验恢复；
+- DeepSeek 开放平台直达入口、三步 Key 申请说明，以及“服务商 + Key”两项式首次配置。
 
 ### 导入与续聊
 
@@ -66,6 +85,16 @@
 - API 连接测试和兼容 `/models` 列表读取
 - API Key 存入操作系统凭据库，不进入浏览器、本地 JSON、对话归档或备份
 
+## 获取 DeepSeek API Key
+
+只导入、阅读和导出历史对话不需要 API Key。需要继续对话时，按下面三步完成配置：
+
+1. 打开 [DeepSeek 开放平台的 API Key 页面](https://platform.deepseek.com/api_keys) 并登录；
+2. 创建一个新的 API Key，生成后立即复制；
+3. 回到肥鱼 FlowChat，点击左下角“连接模型”，选择 DeepSeek，粘贴 Key 后点击“保存并开始使用”。
+
+Key 通常只展示一次，不要把它发给他人或写入对话。肥鱼 FlowChat 会优先把 Key 保存到操作系统凭据库。DeepSeek API 按实际使用计费，账户需要有可用余额；模型和价格以 [DeepSeek 官方定价](https://api-docs.deepseek.com/quick_start/pricing/) 为准。
+
 ## 快速开始
 
 需要 Python 3.10 或更高版本。
@@ -93,13 +122,11 @@ python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-首次使用建议按以下顺序操作：
+首次使用只需：
 
-1. 打开“模型与 API 设置”，保存一个模型配置档案；
-2. 可选执行“测试 API（会计费）”；
-3. 导入一个 DeepSeek 分享链接；
-4. 在归档下方继续对话；
-5. 打开“数据保全中心”，创建并下载第一份完整备份。
+1. 点击“导入 DeepSeek 对话”，粘贴分享链接并导入到本机；
+2. 需要续聊时，再点击“连接模型”并粘贴 API Key；
+3. 定期在“数据保全中心”下载完整备份。
 
 详细步骤和字段解释见 [使用教程](docs/USER_GUIDE.md)。
 
@@ -227,7 +254,13 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 
 ## 项目状态
 
-当前版本：`0.5.0`
+当前版本：`0.5.1`
+
+### 0.5.1 更简单的首次配置
+
+- 连接模型默认只显示服务商和 API Key，其他参数收进“更多设置”。
+- DeepSeek 配置页提供官方开放平台直达入口和三步 Key 申请说明。
+- 简化导入提示、按钮文字和首次使用教程，明确阅读与导出无需 API Key。
 
 ### 0.5 模式开关与兼容回退
 
@@ -244,6 +277,6 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 - 模型设置可选择发送“仅文字 / 文字与图片 / 文字、图片与文件”。默认为文字模式，附件仍完整保存在归档中。
 - 蓝白阅读界面与鱼形对话图标，图片放大、附件下载、OCR 折叠、收藏筛选、会话草稿、代码复制和回到最新消息。
 
-旧版导入若遗漏附件，重新粘贴链接，选择“重新读取为副本”。详情见[使用教程](docs/USER_GUIDE.md)。
+旧版导入若遗漏附件，重新粘贴链接，选择“重新读取为副本”。详情见 [使用教程](docs/USER_GUIDE.md)。
 
 项目以本地单用户场景为主。DeepSeek 分享接口和不同供应商的兼容响应可能变化，升级解析或请求适配时请同时添加回归测试并更新文档。
